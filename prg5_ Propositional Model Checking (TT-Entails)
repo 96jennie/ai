@@ -1,36 +1,25 @@
-import itertools
- 
-def evaluate(expr, model):
-    for s, v in model.items():
-        expr = expr.replace(s, str(v))
-    expr = expr.replace("AND", "and")
-    expr = expr.replace("OR", "or")
-    expr = expr.replace("NOT", "not")
-    expr = expr.replace("=>", "<=")
-    return eval(expr)
- 
-def model_check(kb, query, symbols):
-    print("Truth Table:")
-    print("-------------------------")
-    entails = True
- 
-    for values in itertools.product([False, True], repeat=len(symbols)):
-        model = dict(zip(symbols, values))
-        kb_result = evaluate(kb, model)
-        query_result = evaluate(query, model)
-        print(model, "KB:", kb_result, "Query:", query_result)
- 
-        if kb_result and not query_result:
-            entails = False
- 
-    return entails
- 
-symbols = ["P", "Q"]
-kb = "P AND Q"
-query = "P"
- 
-if model_check(kb, query, symbols):
-    print("\nKB entails Query")
-else:
-    print("\nKB does NOT entail Query")
+def evaluate_kb(models):
+    # Knowledge Base: P -> Q, P
+    return (not models['P'] or models['Q']) and models['P']
 
+
+def tt_entails(symbols, models, query):
+    if not symbols:
+        if evaluate_kb(models):
+            return models[query]
+        return True
+
+    p = symbols[0]
+    rest = symbols[1:]
+
+    return (
+        tt_entails(rest, {**models, p: True}, query)
+        and
+        tt_entails(rest, {**models, p: False}, query)
+    )
+
+
+print(
+    "TT-Entails Evaluation (Does KB entail Q?):",
+    tt_entails(['P', 'Q'], {}, 'Q')
+)
